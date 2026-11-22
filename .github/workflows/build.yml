@@ -24,6 +24,20 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Load signing key from secrets
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        run: |
+          if [ -n "$SIGNING_KEY" ]; then
+            PASS="${SIGNING_KEY%%:*}"
+            echo "::add-mask::$PASS"
+            echo "${SIGNING_KEY#*:}" | base64 -d > "$RUNNER_TEMP/abu.keystore"
+            echo "SIGNING_PASSWORD=$PASS" >> "$GITHUB_ENV"
+            echo "SIGNING_KEYSTORE=$RUNNER_TEMP/abu.keystore" >> "$GITHUB_ENV"
+          else
+            echo "::warning::SIGNING_KEY secret is missing"
+          fi
+
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
